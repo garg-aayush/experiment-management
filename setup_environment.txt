@@ -1,0 +1,8 @@
+# I prefer pip for installation the packages
+conda create -n EXP_TRACK
+pip3 install torch torchvision
+pip install pytorch-lightning
+pip install tensorboard
+pip install matplotlib numpy jupyter
+pip install mlflow
+pip install wandb
