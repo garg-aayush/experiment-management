@@ -132,3 +132,5 @@ dmypy.json
 # log files
 logs/*
 !logs/.gitkeep
+
+.vscode/
