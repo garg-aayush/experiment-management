@@ -1,5 +1,5 @@
 # I prefer pip for installation the packages
-conda create -n EXP_TRACK
+conda create -n EXP_TRACK python=3.8
 pip3 install torch torchvision
 pip install pytorch-lightning
 pip install tensorboard

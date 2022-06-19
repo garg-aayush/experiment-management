@@ -11,7 +11,7 @@ import os
 import pytorch_lightning as pl
 # Callbacks 
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping, RichModelSummary,RichProgressBar
-from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.plugins import DDPPlugin
 
 # load network
@@ -72,13 +72,15 @@ def train_model(dm=None, checkpoint_path=None, save_name=None,
                         max_epochs=max_epochs,
                         callbacks=callbacks,
                         logger=logger,
-                        progress_bar_refresh_rate=1)
+                        progress_bar_refresh_rate=1,
+                        weights_summary='full')
     
     trainer.logger._log_graph = True         # If True, we plot the computation graph in tensorboard
     trainer.logger._default_hp_metric = None # Optional logging argument that we don't need
     
     pl.seed_everything(42) # To be reproducable
     model = CIFARModule(**kwargs)
+    logger.watch(model)
     trainer.fit(model, datamodule=dm)
         
     # # Test best model on validation
@@ -106,7 +108,7 @@ def main():
     parser.add_argument('-ng','--gpus',default=1,type=int)
     
     # optimizer parameters
-    parser.add_argument('-ls', "--learning_rate", default=0.1, type=float,
+    parser.add_argument('-ls', "--learning_rate", default=0.0003, type=float,
                         help="The initial learning rate for SGD.")
     parser.add_argument('-ms', "--milestones", nargs="+", default=[50, 100], type=int,
                         help='2 milestone values for MultistepLR, eg --milestones 50 100')
@@ -116,13 +118,13 @@ def main():
     # paths
     parser.add_argument("--dataset_path", default='../data', type=dir_path,
                         help="Path to dataset folder")
-    parser.add_argument("--log_path", default='./logs', type=dir_path,
+    parser.add_argument("--log_path", default='./wandb/logs', type=dir_path,
                         help="Path to save logs")
     parser.add_argument("--checkpoint_path", default='../saved_models', type=dir_path,
                         help="Path to save model")
     
     args=parser.parse_args()
-    
+
     # print input arguments
     print(f'Random seed: {args.random_seed}')
     print(f'Run name : {args.run_name}')
@@ -139,10 +141,13 @@ def main():
 
     print(f'Dataset_path: {args.dataset_path}')
     print(f'Log_path: {args.log_path}')
-    print(f'Checkpoint_path: {args.log_path}')
+    print(f'Checkpoint_path: {args.checkpoint_path}')
 
     # Start the logger
-    logger = TensorBoardLogger(save_dir=args.log_path, name=args.run_name)
+    logger = WandbLogger(save_dir=args.log_path, name=args.run_name)
+    #logger.watch(model)
+    logger.log_hyperparams(vars(args))
+
     # set the random seed
     pl.seed_everything(args.random_seed)
 

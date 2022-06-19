@@ -24,6 +24,7 @@ import numpy as np
 from utils.plotter import plot_cm, plot_preds
 from utils.vit import VisionTransformer
 import matplotlib.pyplot as plt
+import wandb
 
 ######################################################################
 # Pytorch lightning model class
@@ -112,8 +113,8 @@ class CIFARModule(pl.LightningModule):
         cm = confusion_matrix(targets, preds, self.num_classes)
         fig_ = plot_cm(cm, self.name_classes)
         plt.close(fig_)
-        self.logger.experiment.add_figure("confusion_matrix_train", fig_, self.current_epoch)
-
+        self.logger.experiment.log({"confusion_matrix_train": wandb.Image(fig_)})
+        
     def validation_step(self, batch, batch_idx):
         # "batch" is the output of the training data loader.
         loss, preds, targets = self.step(batch)
@@ -129,10 +130,7 @@ class CIFARModule(pl.LightningModule):
                             ncols=8,
                             data_mean=self.data_mean,
                             data_std=self.data_std)
-            self.logger.experiment.add_figure(
-                                    "examples_val_batch_idx_" + str(batch_idx),
-                                    fig_, 
-                                    self.current_epoch)
+            self.logger.experiment.log({"example_val_batches": wandb.Image(fig_)})
         
         # Logs the accuracy per epoch to tensorboard (weighted average over batches)
         acc = self.val_acc(preds, targets)
@@ -154,8 +152,8 @@ class CIFARModule(pl.LightningModule):
         cm = confusion_matrix(targets, preds, self.num_classes)
         fig_ = plot_cm(cm, self.name_classes)
         plt.close(fig_)
-        self.logger.experiment.add_figure("confusion_matrix_val", fig_, self.current_epoch)
-
+        self.logger.experiment.log({"confusion_matrix_val": wandb.Image(fig_)})
+        
 
     def test_step(self, batch, batch_idx):
         loss, preds, targets = self.step(batch)
@@ -171,10 +169,7 @@ class CIFARModule(pl.LightningModule):
                             ncols=8,
                             data_mean=self.data_mean,
                             data_std=self.data_std)
-            self.logger.experiment.add_figure(
-                                    "examples_test_batch_idx_" + str(batch_idx),
-                                    fig_, 
-                                    self.current_epoch)
+            self.logger.experiment.log({"example_test_batches": wandb.Image(fig_)})
 
         # log test metrics
         acc = self.test_acc(preds, targets)
@@ -192,7 +187,7 @@ class CIFARModule(pl.LightningModule):
         fig_ = plot_cm(cm, self.name_classes)
         plt.close(fig_)
         
-        self.logger.experiment.add_figure("confusion_matrix_test", fig_, self.current_epoch)
+        self.logger.experiment.log({"confusion_matrix_test": wandb.Image(fig_)})
 
     def on_epoch_end(self):
         # reset metrics at the end of every epoch
